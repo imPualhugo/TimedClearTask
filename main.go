@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	path2 "path"
 	"runtime"
 	"strconv"
 	"time"
@@ -115,7 +116,7 @@ func unixDeleteFile(path string) error {
 
 		fileAttr := stat.ModTime()
 
-		if fileAttr.Before(overDay) {
+		if fileAttr.Before(overDay) && path2.Ext(files[i]) == ".log" {
 			err := os.Remove(files[i])
 
 			log.Println("删除文件: ", files[i])
