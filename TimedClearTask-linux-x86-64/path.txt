@@ -1,2 +1,2 @@
-/home/kfts/V8/apache-tomcat-9.0.46-linux/logs/
-/home/kfts/app/microservices/hedgingtrader-3.1.9.1-SNAPSHOT/logs/
+/home/kfts/V8/apache-tomcat-9.0.46-linux/logs
+/home/kfts/app/microservices/hedgingtrader-3.1.9.1-SNAPSHOT/logs

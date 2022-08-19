@@ -48,7 +48,7 @@ func main() {
 
 	scheduler := gocron.NewScheduler(time.Local)
 
-	println("开启自动清理日志, 间隔天数为: ", *days)
+	log.Println("开启自动清理日志, 间隔天数为: ", *days)
 
 	_, err := scheduler.Every(*days).Days().At("0:00").Do(task[runtime.GOOS])
 	if err != nil {
@@ -79,7 +79,7 @@ func unixTask() {
 			log.Fatalln(err)
 			return
 		} else {
-			println("文件夹: ", string(line), strconv.Itoa(*days), "天前日志已清除")
+			log.Println("文件夹: ", string(line), strconv.Itoa(*days), "天前日志已清除")
 		}
 	}
 
@@ -93,7 +93,7 @@ func unixDeleteFile(path string) error {
 		return errors.New("路径" + path + "无法打开或者非文件夹")
 	}
 
-	overDay := time.Now().AddDate(0, 0, *days*-1)
+	overDay := time.Now().AddDate(0, 0, -(*days))
 
 	files, _ := GetAllFile(path)
 
@@ -118,7 +118,7 @@ func unixDeleteFile(path string) error {
 		if fileAttr.Before(overDay) {
 			err := os.Remove(files[i])
 
-			println(time.Now().Format("2006-01-02 15:04:05.000"), "删除文件: ", files[i])
+			log.Println("删除文件: ", files[i])
 
 			if err != nil {
 				findFile.Close()
@@ -132,6 +132,6 @@ func unixDeleteFile(path string) error {
 }
 
 func windowTask() {
-	println("暂未支持Windows系统")
+	log.Println("暂未支持Windows系统")
 	//nothing to do
 }

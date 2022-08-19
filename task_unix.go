@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"time"
 )
@@ -12,7 +12,7 @@ func GetAllFile(pathname string) ([]string, error) {
 
 	fis, err := os.ReadDir(pathname)
 	if err != nil {
-		fmt.Printf("读取文件目录失败，pathname=%v, err=%v \n", pathname, err)
+		log.Fatalf("读取文件目录失败，pathname=%v, err=%v \n", pathname, err)
 		return result, err
 	}
 
@@ -23,7 +23,7 @@ func GetAllFile(pathname string) ([]string, error) {
 		if fi.IsDir() {
 			temp, err := GetAllFile(fullname)
 			if err != nil {
-				fmt.Printf("读取文件目录失败,fullname=%v, err=%v", fullname, err)
+				log.Fatalf("读取文件目录失败,fullname=%v, err=%v \n", fullname, err)
 				return result, err
 			}
 			result = append(result, temp...)
