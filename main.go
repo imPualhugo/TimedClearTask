@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"github.com/go-co-op/gocron"
 	"io"
@@ -30,6 +31,13 @@ var days = flag.Int("day", 14, "清理日志天数")
 var rightNow = flag.Bool("now", false, "立即执行")
 
 func main() {
+
+	path, err2 := os.Open("./path.txt")
+
+	if err2 != nil {
+		log.Fatalln("读取path.txt失败")
+	}
+	path.Close()
 
 	flag.Parse()
 
@@ -78,23 +86,30 @@ func unixTask() {
 }
 
 func unixDeleteFile(path string) error {
+
+	pathFile, err := os.Stat(path)
+
+	if err != nil || !pathFile.IsDir() {
+		return errors.New("路径" + path + "无法打开或者非文件夹")
+	}
+
 	overDay := time.Now().AddDate(0, 0, *days*-1)
 
 	files, _ := GetAllFile(path)
 
 	for i := 0; i < len(files); i++ {
 
-		fileInfo, err := os.Open(files[i])
+		findFile, err := os.Open(files[i])
 
 		if err != nil {
-			fileInfo.Close()
+			findFile.Close()
 			log.Fatalln(err)
 		}
 
-		stat, err := fileInfo.Stat()
+		stat, err := findFile.Stat()
 
 		if err != nil {
-			fileInfo.Close()
+			findFile.Close()
 			log.Fatalln(err)
 		}
 
@@ -106,9 +121,11 @@ func unixDeleteFile(path string) error {
 			println(time.Now().Format("2006-01-02 15:04:05.000"), "删除文件: ", files[i])
 
 			if err != nil {
-				fileInfo.Close()
+				findFile.Close()
 				return err
 			}
+
+			findFile.Close()
 		}
 	}
 	return nil

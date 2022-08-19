@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 )
 
 // GetAllFile 递归获取指定目录下的所有文件名
 func GetAllFile(pathname string) ([]string, error) {
-	result := []string{}
+	var result []string
 
-	fis, err := ioutil.ReadDir(pathname)
+	fis, err := os.ReadDir(pathname)
 	if err != nil {
 		fmt.Printf("读取文件目录失败，pathname=%v, err=%v \n", pathname, err)
 		return result, err
