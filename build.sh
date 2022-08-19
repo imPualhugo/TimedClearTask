@@ -14,4 +14,4 @@ chmod 640 ./$program-linux-x86-64/readme.txt
 
 tar -czvf ./$program-linux-x86-64.tar ./$program-linux-x86-64
 
-cp ./$program-linux-x86-64.tar /Users/mac/Documents
+#cp ./$program-linux-x86-64.tar /Users/mac/Documents
