@@ -8,7 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
-	path2 "path"
+	"path"
 	"runtime"
 	"strconv"
 	"time"
@@ -31,16 +31,23 @@ var days = flag.Int("day", 14, "清理日志天数")
 
 var rightNow = flag.Bool("now", false, "立即执行")
 
+var inputPathFile = flag.String("path", "./path.txt", "读取的路径文件")
+
 func main() {
 
-	path, err2 := os.Open("./path.txt")
+	flag.Parse()
+
+	pathFile, err2 := os.Open(*inputPathFile)
 
 	if err2 != nil {
-		log.Fatalln("读取path.txt失败")
+		log.Fatalln("读取路径文件: " + (*inputPathFile) + "失败")
+		return
 	}
-	path.Close()
-
-	flag.Parse()
+	err := pathFile.Close()
+	if err != nil {
+		pathError(pathFile, err)
+		return
+	}
 
 	if *rightNow {
 		task[runtime.GOOS]()
@@ -51,7 +58,7 @@ func main() {
 
 	log.Println("开启自动清理日志, 间隔天数为: ", *days)
 
-	_, err := scheduler.Every(*days).Days().At("0:00").Do(task[runtime.GOOS])
+	_, err = scheduler.Every(*days).Days().At("0:00").Do(task[runtime.GOOS])
 	if err != nil {
 		log.Fatalln(err)
 		return
@@ -61,14 +68,15 @@ func main() {
 
 func unixTask() {
 
-	path, err2 := os.Open("./path.txt")
+	pathFile, err2 := os.Open(*inputPathFile)
 
-	defer path.Close()
+	defer pathFile.Close()
 	if err2 != nil {
-		log.Fatalln("path.txt文件打开失败")
+		log.Fatalln("pathFile.txt文件打开失败")
+		return
 	}
 
-	reader := bufio.NewReader(path)
+	reader := bufio.NewReader(pathFile)
 
 	for {
 		line, _, err2 := reader.ReadLine()
@@ -79,57 +87,81 @@ func unixTask() {
 		if err != nil {
 			log.Fatalln(err)
 			return
-		} else {
-			log.Println("文件夹: ", string(line), strconv.Itoa(*days), "天前日志已清除")
 		}
+		log.Println("文件夹: ", string(line), strconv.Itoa(*days), "天前日志已清除")
 	}
 
 }
 
-func unixDeleteFile(path string) error {
+func unixDeleteFile(pathName string) error {
 
-	pathFile, err := os.Stat(path)
-
-	if err != nil || !pathFile.IsDir() {
-		return errors.New("路径" + path + "无法打开或者非文件夹")
-	}
+	pathFile, err := os.Stat(pathName)
 
 	overDay := time.Now().AddDate(0, 0, -(*days))
 
-	files, _ := GetAllFile(path)
+	if err != nil || !pathFile.IsDir() {
+		return errors.New("路径" + pathName + "无效")
+	}
+
+	//读取到的是文件
+	if !pathFile.IsDir() {
+		return deleteLogFile(&overDay, pathName)
+	}
+
+	files, _ := GetAllFile(pathName)
 
 	for i := 0; i < len(files); i++ {
 
-		findFile, err := os.Open(files[i])
-
+		err := deleteLogFile(&overDay, files[i])
 		if err != nil {
-			findFile.Close()
-			log.Fatalln(err)
+			return err
 		}
 
-		stat, err := findFile.Stat()
-
-		if err != nil {
-			findFile.Close()
-			log.Fatalln(err)
-		}
-
-		fileAttr := stat.ModTime()
-
-		if fileAttr.Before(overDay) && path2.Ext(files[i]) == ".log" {
-			err := os.Remove(files[i])
-
-			log.Println("删除文件: ", files[i])
-
-			if err != nil {
-				findFile.Close()
-				return err
-			}
-
-			findFile.Close()
-		}
 	}
 	return nil
+}
+
+// 根据传入的时间和文件路径删除文件
+func deleteLogFile(overDay *time.Time, filePath string) error {
+	if path.Ext(filePath) != ".log" {
+		return nil
+	}
+
+	findFile, err := os.Open(filePath)
+
+	if err != nil {
+		findFile.Close()
+		log.Fatalln(err)
+		return err
+	}
+
+	stat, err := findFile.Stat()
+
+	if err != nil {
+		findFile.Close()
+		log.Fatalln(err)
+		return err
+	}
+
+	fileAttr := stat.ModTime()
+
+	if fileAttr.Before(*overDay) {
+		err := os.Remove(filePath)
+
+		log.Println("删除文件: ", filePath)
+
+		if err != nil {
+			findFile.Close()
+			return err
+		}
+
+		findFile.Close()
+	}
+	return nil
+}
+
+func pathError(path *os.File, err error) {
+	log.Fatalln("Path: " + path.Name() + "crushed an Error , Error: " + err.Error())
 }
 
 func windowTask() {
