@@ -1,10 +1,10 @@
 program=TimedClearTask
 
-go clean
+go clean&&go fmt
 
 go env -w GOOS=linux GOARCH=amd64
 
-go build
+go build -v
 
 go env -w GOOS=darwin GOARCH=arm64
 
